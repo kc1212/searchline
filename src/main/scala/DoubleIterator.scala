@@ -47,7 +47,9 @@ class ByteDoubleIterator(s: Array[Byte]) extends DoubleIterator[Byte] {
     b
   }
 
-  def len: Long = s.length
+  override def len: Long = s.length
+
+  override def toString(): String = new String(s)
 }
 
 class ChanDoubleIterator(chan: SeekableByteChannel) extends DoubleIterator[Byte] {

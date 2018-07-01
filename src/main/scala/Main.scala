@@ -1,17 +1,7 @@
-import java.nio.file.{Files, Path, StandardOpenOption}
+import java.nio.file.{Files, Path, Paths, StandardOpenOption}
 import java.util
 
 object Main {
-  def lineSearcher(f: Path, key: String): Boolean = {
-    val chan = Files.newByteChannel(f, util.EnumSet.of(StandardOpenOption.READ))
-    val iter = new ChanDoubleIterator(chan)
-    binarySearch(iter, key)
-  }
-
-  def binarySearch(iter: DoubleIterator[Byte], key: String): Boolean = {
-    binarySearchRec(iter, 0, iter.len, key)
-  }
-
   def findLastLine(iter: DoubleIterator[Byte]): Long = {
     iter.seek(iter.size)
     findCurrLine(iter)
@@ -33,44 +23,40 @@ object Main {
     new String(chan.takeWhile(_ != '\n').toArray)
   }
 
+  def binarySearch(iter: DoubleIterator[Byte], key: String): Boolean = {
+    val high = iter.len / (key.length + 1)
+    binarySearchRec(iter, 0, high, key)
+  }
+
   def binarySearchRec(chan: DoubleIterator[Byte], low: Long, high: Long, key: String): Boolean = {
-    if (low > high) throw new RuntimeException("impossible state " + (low, high))
-
-    // base condition
-    chan.seek(findCurrLine(chan.seek(low)))
-    val lowLine = readLine(chan)
-    if (lowLine == key) return true
-
-    chan.seek(findCurrLine(chan.seek(high)))
-    val highLine = readLine(chan)
-    if (highLine == key) return true
-
-    // if we are the same line, then the key does not exist
-    if (lowLine == highLine) return false
-
-    // if there are no lines in between us, then the key does not exist
-    val nextLowLine = {
-      chan.seek(low)
-      chan.seek(findNextLine(chan))
-      readLine(chan)
-    }
-    if (nextLowLine == highLine) return false
-
+    // base case
+    if (low > high) return false
     // recursive case
     val mid = (low + high) / 2
-    chan.seek(mid)
-    chan.seek(findCurrLine(chan))
+    chan.seek(mid * (key.length + 1)) // convert mid to actual position in channel
     val candidate = readLine(chan)
-    if (candidate.length != key.length) throw new RuntimeException("key length is not equal to line length")
-
+    if (candidate.length != key.length)
+      throw new RuntimeException("key length is not equal to line length")
     key.compareTo(candidate) match {
-      case x if x > 0 => binarySearchRec(chan, mid, high, key)
-      case x if x < 0 => binarySearchRec(chan, low, mid, key)
+      case x if x > 0 => binarySearchRec(chan, mid + 1, high, key)
+      case x if x < 0 => binarySearchRec(chan, low, mid - 1, key)
       case _ => true
     }
   }
 
+  def searchLine(f: Path, key: String): Boolean = {
+    val chan = Files.newByteChannel(f, util.EnumSet.of(StandardOpenOption.READ))
+    val iter = new ChanDoubleIterator(chan)
+    binarySearch(iter, key)
+  }
+
   def main(args: Array[String]): Unit = {
-    println("bonjour le monde")
+    if (args.length != 2) {
+      println("invalid arguments")
+      println("usage: searchline <file> <key>")
+    } else {
+      if (searchLine(Paths.get(args(0)), args(1))) println("ok")
+      else println("not found")
+    }
   }
 }
