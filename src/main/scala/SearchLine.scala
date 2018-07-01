@@ -1,7 +1,7 @@
 import java.nio.file.{Files, Path, Paths, StandardOpenOption}
 import java.util
 
-object Main {
+object SearchLine {
   def findLastLine(iter: DoubleIterator[Byte]): Long = {
     iter.seek(iter.size)
     findCurrLine(iter)
@@ -55,8 +55,10 @@ object Main {
       println("invalid arguments")
       println("usage: searchline <file> <key>")
     } else {
-      if (searchLine(Paths.get(args(0)), args(1))) println("ok")
-      else println("not found")
+      if (searchLine(Paths.get(args(0)), args(1)))
+        println("found")
+      else
+        println("not found")
     }
   }
 }

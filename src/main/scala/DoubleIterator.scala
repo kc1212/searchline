@@ -4,10 +4,13 @@ import java.nio.channels.SeekableByteChannel
 import scala.collection.mutable
 
 abstract class DoubleIterator[T] extends Iterator[T] {
+
   class PrevIter(dblIter: DoubleIterator[T]) extends Iterator[T] {
     override def hasNext: Boolean = dblIter.hasPrev
+
     override def next(): T = dblIter.prev()
   }
+
   protected var ctr: Long = 0
 
   override def hasNext: Boolean = ctr < len
@@ -53,6 +56,7 @@ class ByteDoubleIterator(s: Array[Byte]) extends DoubleIterator[Byte] {
 }
 
 class ChanDoubleIterator(chan: SeekableByteChannel) extends DoubleIterator[Byte] {
+
   private class WindowManager(chan: SeekableByteChannel) {
     private val windowSize = 512
     private val windows = mutable.Map[Long, Array[Byte]]()
